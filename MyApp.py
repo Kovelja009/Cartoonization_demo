@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from cartoonize import Cartoonize
 from ffmpegOperations import convert_mov_to_seq
-from ffmpegOperations import movie_py_seq_to_mov
+from ffmpegOperations import convert_seq_to_mov
 from cv2 import cv2
 import os
 import ntpath
@@ -50,7 +50,7 @@ def open_video_file(cartoonize):
     new_audio_dir = r"audio/my_result.mp3"
     new_audio = mp.AudioFileClip(new_audio_dir)
 
-    movie_py_seq_to_mov(new_clip_dir, files, frame_rate, new_audio)
+    convert_seq_to_mov(new_clip_dir, files, frame_rate, new_audio)
 
 
 def cartoonize_iterate(cartoon, load_folder='test_images', cartoonized_folder='cartoonized_video_images'):
