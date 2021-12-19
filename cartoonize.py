@@ -8,10 +8,8 @@ from tqdm import tqdm
 
 
 class Cartoonize:
-    def __init__(self, model_path='saved_models', save_folder='cartoonized_images'):
-        self.save_folder = save_folder
+    def __init__(self, model_path='saved_models'):
         self.model_path = model_path
-        self.save_folder = save_folder
         self.input_photo = tf.compat.v1.placeholder(tf.float32, [1, None, None, 3])
         self.network_out = network.unet_generator(self.input_photo)
         self.final_out = guided_filter.guided_filter(self.input_photo, self.network_out, r=1, eps=5e-3)
@@ -39,7 +37,7 @@ class Cartoonize:
         image = image[:h, :w, :]
         return image
 
-    def cartoonize(self, load_path, name):
+    def cartoonize(self, load_path, name, save_folder):
         # input_photo = tf.compat.v1.placeholder(tf.float32, [1, None, None, 3])
         # network_out = network.unet_generator(input_photo)
         # final_out = guided_filter.guided_filter(input_photo, network_out, r=1, eps=5e-3)
@@ -58,7 +56,7 @@ class Cartoonize:
         # for name in tqdm(name_list):
         try:
             # load_path = os.path.join(load_folder, name)
-            save_path = os.path.join(self.save_folder, name)
+            save_path = os.path.join(save_folder, name)
             image = cv2.imread(load_path)
             image = self.resize_crop(image)
             batch_image = image.astype(np.float32) / 127.5 - 1
