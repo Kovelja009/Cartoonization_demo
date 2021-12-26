@@ -1,8 +1,9 @@
 from tkinter import *
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 from cartoonize import Cartoonize
 from ffmpegOperations import convert_mov_to_seq
 from ffmpegOperations import convert_seq_to_mov
+from PIL import ImageTk, Image
 from cv2 import cv2
 import os
 import ntpath
@@ -13,10 +14,43 @@ import moviepy.editor as mp
 def open_photo_file(cartoonize):
     load_path = filedialog.askopenfilename(initialdir="C:\\Users\\Vanja\\Desktop",
                                            title="Choose photo",
-                                           filetypes=[("image", "*.jpg")])
+                                           filetypes=[("image", "*.jpg"), ("image", "*jpeg")])
+
+    global left_img_lbl
+    global right_image_lbl
+    global left_frame
+    global right_frame
+    global left_image
+    global right_image
+
     if len(load_path) != 0:
         name = ntpath.basename(load_path)
         cartoonize.cartoonize(load_path, name, 'cartoonized_images')
+
+        img = Image.open(load_path)
+
+        if img.width > left_frame.winfo_width() or img.height > left_frame.winfo_height():
+            resized = img.resize((left_frame.winfo_width(), int(left_frame.winfo_width() * img.height / img.width)),
+                                 Image.ANTIALIAS)
+        else:
+            resized = img.resize((int(img.width / 2), int(img.height / 2)), Image.ANTIALIAS)
+        left_img_lbl.grid_forget()
+        left_image = ImageTk.PhotoImage(resized)
+        left_img_lbl = Label(left_frame, image=left_image, borderwidth=0)
+        left_img_lbl.grid(row=1, column=0, padx=5, pady=5)
+
+        relative_path = os.path.join('cartoonized_images', name)
+        img2 = Image.open(relative_path)
+
+        if img2.width > right_frame.winfo_width() or img2.height > right_frame.winfo_height():
+            resized2 = img2.resize((right_frame.winfo_width(), int(right_frame.winfo_width() * img2.height / img2.width)),
+                                 Image.ANTIALIAS)
+        else:
+            resized2 = img2.resize((int(img2.width / 2), int(img2.height / 2)), Image.ANTIALIAS)
+        right_image_lbl.grid_forget()
+        right_image = ImageTk.PhotoImage(resized2)
+        right_image_lbl = Label(right_frame, image=right_image, borderwidth=0)
+        right_image_lbl.grid(row=1, column=0, padx=5, pady=5)
 
 
 def open_video_file(cartoonize):
@@ -78,41 +112,49 @@ def start_video_process_thread(cartoonize):
     t2.start()
 
 
+cartoon = Cartoonize('saved_models')
 window = Tk()
-window.title("White-box cartoonization")
-window.minsize(721, 480)
-window.config(bg="#765898")
+window.title("White-box Cartoonization")
+window.minsize(1025, 500)
+window.geometry("1025x500")
 window.iconbitmap("dummy_photos/icon.ico")
 
-# cartoon = Cartoonize('saved_models')
+darker_color = '#090314'
+lighter_color = "#765898"
+window.config(bg=lighter_color)
 
 
-# button_photo_cartoon.pack()
-# button_video_cartoon.pack()
-
-left_frame = Frame(window, width=400, height=480, bg='#090314')
-left_frame.grid(row=0, column=0, padx=10, pady=5)
-right_frame = Frame(window, width=550, height=480, bg='#090314')
-right_frame.grid(row=0, column=1, padx=10, pady=5)
-tool_bar = Frame(left_frame, width=180, height=300, bg='#090314')
+left_frame = Frame(window, width=window.winfo_width() / 2 - 150, height=window.winfo_height() - 10, bg=darker_color)
+left_frame.grid(row=0, column=0, padx=10, pady=10, sticky='nswe')
+right_frame = Frame(window, width=window.winfo_width() / 2 + 80, height=window.winfo_height() - 10, bg=darker_color)
+right_frame.grid(row=0, column=1, padx=10, pady=10, sticky='nswe')
+tool_bar = Frame(left_frame, width=180, height=50, bg=darker_color)
 tool_bar.grid(row=2, column=0, padx=5, pady=5)
 left_image = PhotoImage(file="dummy_photos/real life.png")
 original_image = left_image.subsample(2, 2)  # resize image using subsample
-left_img_lbl = Label(left_frame, image=original_image)
+left_img_lbl = Label(left_frame, image=original_image, borderwidth=0)
 left_img_lbl.grid(row=1, column=0, padx=5, pady=5)
-
 right_image = PhotoImage(file="dummy_photos/cartoon.png")
-right_image_lbl = Label(right_frame, image=right_image)
-right_image_lbl.grid(row=0, column=0, padx=5, pady=5)
+right_image_lbl = Label(right_frame, image=right_image, borderwidth=0)
+right_image_lbl.grid(row=1, column=0, padx=5, pady=5)
 
-# , command=lambda: start_photo_process_thread(cartoon)
-# , command=lambda: start_video_process_thread(cartoon)
-button_photo_cartoon = Button(tool_bar, text='Cartoonize photo')
-button_video_cartoon = Button(tool_bar, text='Cartoonize video')
+button_photo_cartoon = Button(tool_bar, background=lighter_color, highlightcolor=lighter_color, text='Cartoonize photo',
+                              command=lambda: start_photo_process_thread(cartoon))
+button_video_cartoon = Button(tool_bar, text='Cartoonize video', command=lambda: start_video_process_thread(cartoon))
 
-Label(left_frame, text="Original Image", background="#090314", foreground='white').grid(row=0, column=0, padx=5, pady=5)
+original_txt = Label(left_frame, text="Original Image", background="#090314", foreground='white', height=3)
+original_txt.grid(row=0, column=0, padx=5, pady=5)
 
-button_photo_cartoon.grid(row=3, column=0, padx=7, pady=150)
-button_video_cartoon.grid(row=3, column=1, padx=7, pady=150)
+cartoon_txt = Label(right_frame, text="Cartoon Image", background="#090314", foreground='white', height=3)
+cartoon_txt.grid(row=0, column=0, padx=5, pady=5)
+
+button_photo_cartoon.grid(row=0, column=0, padx=7, pady=150)
+button_video_cartoon.grid(row=0, column=1, padx=7, pady=150)
+window.grid_columnconfigure('all', weight=1)
+window.grid_rowconfigure('all', weight=1)
+left_frame.grid_columnconfigure('all', weight=1)
+left_frame.grid_rowconfigure('all', weight=1)
+right_frame.grid_rowconfigure('all', weight=1)
+right_frame.grid_columnconfigure('all', weight=1)
 
 window.mainloop()
